@@ -1,69 +1,115 @@
+/**
+ * A sequential DEqueue implemenation to use as a baseline for our data
+ * structure project. This code will be used in conjunction with a concurrent
+ * library to add fine grained locking to the functions. 
+ * @see Node   
+ */
 public class DoubleEndedQueue<T> {
+    // Front of the queue
     private Node<T> head;
+    // End of the queue
     private Node<T> tail;
+    private int size;
     
+    // Constructs an empty queue
     public DoubleEndedQueue() {
         this.head = null;
         this.tail = null;
+        this.size = 0;
     }
-
+    
+    /**
+     * This function adds an element to the front of the queue making it the
+     * new head. 
+     * @param data to insert into the queue
+     */ 
     public void push_front(T data) {
-    	Node<T> head = this.head;
-        Node<T> newHead = new Node<>(data, null, head);
+    	// store the current head of the queue
+        Node<T> prevHead = this.head;
+        // create the new head, with type data, prev = null, next = head
+        Node<T> newHead = new Node<>(data, null, prevHead);
+        // set the new node as the head 
         this.head = newHead;
-        if(this.tail == null)
-        	this.tail = this.head;
-        if(head != null)
-        	head.setPrev(newHead);
+        // check if the queue is empty
+        if(prevHead == null) 
+        	this.tail = this.head;	// initialize tail to head
+        else 
+        	prevHead.setPrev(newHead);	// else set prevHead.prev to the new head
+        this.size++;
         return;
     }
 
     public void push_back(T data) {
-    	Node<T> tail = this.tail;
-        Node<T> newTail = new Node<>(data, tail, null);
+    	// store the current tail of the queue
+    	Node<T> prevTail = this.tail;
+        // create the new tail, with type data, prev = tail, next = null
+        Node<T> newTail = new Node<>(data, prevTail, null);
+        // set the new node as the tail 
         this.tail = newTail;
-        if(this.head == null)
-        	this.head = this.tail;
-        if(tail != null)
-        	tail.setNext(newTail);
+        // check if the queue is empty
+        if(prevTail == null)
+        	this.head = this.tail;	// initialize tail to head
+        else
+        	prevTail.setNext(newTail);	// else set prevHead.prev to the new head
+        this.size++;
         return;
     }
 
     public T pop_front() {
+    	// if the queue is empty return null
     	if(this.head == null)
     		return null;
+    	// store the result of the front pop
         Node<T> result = this.head;
+        // check if there are more items in the queue
         if(result.getNext() != null) {
+        	// physically remove the item from the list by setting the head = head.next
         	this.head = this.head.getNext();
+        	// mark the new head's previous field to null  indicating the end of the list
         	this.head.setPrev(null);
         }
         else {	// list is now empty
+        	// set the head and tail to null
         	this.head = null;
         	this.tail = null;
         }
+        this.size--;
+        // return the popped node's data
         return result.getData();
     }
 
     public T pop_back() {
+    	// if the queue is empty return null
     	if(this.tail == null)
     		return null;
+    	// store the result of the back pop
         Node<T> result = this.tail;
+        // check if there are more items in the queue
         if(result.getPrev() != null) {
+        	// physically remove the item from the list by setting the tail = tail.prev
         	this.tail = this.tail.getPrev();
+        	// mark the new tail's next field to null indicating the end of the list
         	this.tail.setNext(null);
         }
         else {	// list is now empty
+        	// set the head and tail to null
         	this.head = null;
         	this.tail = null;
         }
+        this.size--;
         return result.getData();
     }
     
-    public boolean isEmpty() {
-    	if(this.head == null)
-    		return true;
-    	return false;
-    }
+    /** tests if the queue is empty, this occurs if this.head is null 
+     * @return boolean
+     */
+    public boolean isEmpty() { return (this.head == null) ? true : false; }
+
+    /**
+     * returns size field of the object
+     * @return number of elements
+     */
+    public int size() { return this.size; }
 
     public String toString() {
         String output = "[head]->";
@@ -123,3 +169,4 @@ class Node<T> {
     // use the toString of the given data
     public String toString() { return data.toString(); }
 }
+
