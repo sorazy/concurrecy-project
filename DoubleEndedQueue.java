@@ -123,6 +123,11 @@ public class DoubleEndedQueue<T> {
     }
 }
 
+/**
+ * This Node<T> class implements a double linked list using a previous and next
+ * object reference to traverse the list. This implemenation will make creating
+ * an unbounded DEqueue object much easier than using an array. 
+ */ 
 class Node<T> {
     private T data;
     private Node<T> prev;
