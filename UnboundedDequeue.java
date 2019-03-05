@@ -1,5 +1,5 @@
 /**
- * Group __ Data Structure Project (Sequential Version)
+ * Group 2 : Data Structure Project (Sequential Version)
  * A sequential implemnetation of an Unbounded Double Ended Queue.
  * This code will be used with a concurrency wrapper to perform efficiency
  * testing with our concurrent non-blocking dequeue.
