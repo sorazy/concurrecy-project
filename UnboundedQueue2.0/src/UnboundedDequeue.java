@@ -1,44 +1,6 @@
 import java.util.concurrent.atomic.AtomicReference;
 
 public class UnboundedDequeue<T> {
-
-	public static void main(String[] args) {
-		UnboundedDequeue<Integer> queue = new UnboundedDequeue<>();
-
-		/*
-		queue.push_left(0);
-		queue.push_left(1);
-		queue.push_left(2);
-		queue.push_left(3);
-		queue.push_left(4);
-		queue.push_left(5);
-
-		System.out.println(queue.pop_left());
-		System.out.println(queue.pop_left());
-		System.out.println(queue.pop_left());
-		System.out.println(queue.pop_left());
-		System.out.println(queue.pop_left());
-		System.out.println(queue.pop_left());
-		*/
-
-		
-		queue.push_right(0);
-		queue.push_right(1);
-		queue.push_right(2);
-		queue.push_right(3);
-		queue.push_right(4);
-		queue.push_right(5);
-
-		System.out.println(queue.pop_right());
-		System.out.println(queue.pop_right());
-		System.out.println(queue.pop_right());
-		System.out.println(queue.pop_right());
-		System.out.println(queue.pop_right());
-		System.out.println(queue.pop_right());
-		
-
-	}
-	
 	public static Object left_null = new Object();
 	public static Object right_null = new Object();
 	public static Object left_seal = new Object();
