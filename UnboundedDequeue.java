@@ -16,7 +16,7 @@
 @SuppressWarnings("unchecked")
 public class UnboundedDequeue<T> {
 	/**
-     * This class is used to store hints on whre the edge elemnt are within the
+     * This class is used to store hints on whre the edge element are within the
      * data structure. 
      * @param queue the bounded array in which the last node is located.
      * @param loc the location of the last node in the array.
