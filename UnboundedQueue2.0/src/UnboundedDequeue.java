@@ -16,142 +16,96 @@ public class UnboundedDequeue<T> {
 		this.rightNodeHint.get().loc = this.rightNodeHint.get().buffer.rightHint;
 	}
 	
-	/*
-	 * NodeHint<T> findLeftEdge(NodeHint<T> hint) {
-		Node<T> node = hint.buffer;
-		int index = hint.loc;
-		while(true) {
-			while(node.array[0].get().data instanceof Node<?>) {
-					node = (Node<T>) node.array[0].get().data;
-					index = array_size - 2;
-			}
-			if(index == 0) {
-				if(node.array[0].get().data instanceof Node<?>)
-					return new NodeHint<>((Node<T>) node.array[0].get().data, array_size - 2);
-				return this.rightNodeHint.get();
-			}
-			else if(index == array_size  - 1) {
-				if (node.array[array_size - 1].get().data instanceof Node<?>)
-					return new NodeHint<>((Node<T>) node.array[array_size - 1].get().data, 1);
-				else 
-					return this.leftNodeHint.get();
-			} else if(node.array[index].get().data != left_null && node.array[index - 1].get().data == left_null)
-				return new NodeHint<>(node, index);
-			else if (node.array[index].get().data == left_null)
-				index++;
-			else 
-				index--;
-		}
-	}
-	 */
+
 
 	@SuppressWarnings("unchecked")
 	NodeHint<T> findLeftEdge(NodeHint<T> hint) {
 		Node<T> node = hint.buffer;
-		int index = (hint.loc < hint.buffer.leftHint) ? hint.loc : hint.buffer.leftHint;
-		int count = 0;
+		int index = hint.loc; 
 		
 		while(node.array[0].get().data instanceof Node<?>) {
 			node = (Node<T>) node.array[0].get().data;
 			index = array_size - 2;
 		}
-		while(true) {
-			count++;
-			if(count > 1000)
-				System.out.println();
-			
+		while((node.array[index - 1].get().data != left_null) 
+				&& (node.array[index - 1].get().data != left_seal)) {
+			index--;
 			if(index == 0) {
-				if(node.array[0].get().data instanceof Node<?>) {
-					node = (Node<T>) node.array[0].get().data;
+				if (node.array[0].get().data instanceof Node<?>) {
+					node =(Node<T>) node.array[0].get().data;
 					index = array_size - 2;
 				}
-			} else if(index == array_size  - 1) {
+				else {
+					System.out.println("find left problem");
+				}
+			}
+		}
+		if(index == array_size - 1) {
+			if (node.array[array_size - 1].get().data instanceof Node<?>) {
+				node =(Node<T>) node.array[array_size - 1].get().data;
+				index = 1;
+			} else {
+				System.out.println("find left problem");
+			}
+		}
+		while((node.array[index].get().data == left_null) 
+				&& (node.array[index].get().data != left_seal)) {
+			index++;
+			if(index == array_size - 1) {
 				if (node.array[array_size - 1].get().data instanceof Node<?>) {
 					node =(Node<T>) node.array[array_size - 1].get().data;
 					index = 1;
-					return new NodeHint<>(node, index);
+				} else {
+					System.out.println("find left problem");
 				}
-			} 
-			
-			if(node.array[index].get().data != left_null && node.array[index].get().data != right_seal && node.array[index - 1].get().data == left_null)
-				return new NodeHint<>(node, index);
-			else if (node.array[index].get().data == left_null)
-				index++;
-			else 
-				index--;
-		}
-	}
-
-	/*
-	 * NodeHint<T> findRightEdge(NodeHint<T> hint) {
-		Node<T> node = hint.buffer;
-		int index = hint.loc;
-		int count = 0;
-		while(true) {
-			if(count == 1000) {
-				System.out.println("Data");
-				System.out.println("hint : " + node);
-				System.out.println("index : " + index);
 			}
-			count++;
-			while(node.array[array_size - 1].get().data instanceof Node<?>) {
-				node = (Node<T>) node.array[array_size - 1].get().data;
-				index = 1;
 		}
-			if(index == 0) {
-				if(node.array[0].get().data instanceof Node<?>)
-					return new NodeHint<>((Node<T>) node.array[0].get().data, array_size - 2);
-				return this.rightNodeHint.get();
-			} else if(index == array_size  - 1) {
-				if (node.array[array_size - 1].get().data instanceof Node<?>)
-					return new NodeHint<>((Node<T>) node.array[array_size - 1].get().data, 1);
-				else 
-					return this.leftNodeHint.get();
-			}else if(node.array[index].get().data != right_null && node.array[index - 1].get().data == right_null)
-				return new NodeHint<>(node, index);
-			else if (node.array[index].get().data == right_null)
-				index--;
-			else 
-				index++;
-		}
+		return new NodeHint<>(node, index);
 	}
-
-	 */
 	@SuppressWarnings("unchecked")
 	NodeHint<T> findRightEdge(NodeHint<T> hint) {
 		Node<T> node = hint.buffer;
 		int index = hint.loc;
-		int count = 0;
 		
 		while(node.array[array_size - 1].get().data instanceof Node<?>) {
 			node = (Node<T>) node.array[array_size - 1].get().data;
 			index = 1;
 		}
 		
-		while(true) {
-			
-			count++;
-			if(count > 1000)
-				System.out.println();
-			
-			
-			if(index == 0) {
-				if(node.array[0].get().data instanceof Node<?>) {
-					node = (Node<T>) node.array[0].get().data;
-					index = array_size - 2;
-				}
-			} else if(index == array_size  - 1) {
+		while((node.array[index + 1].get().data != right_null) 
+				&& (node.array[index + 1].get().data != right_seal)) {
+			index++;
+			if(index == array_size - 1) {
 				if (node.array[array_size - 1].get().data instanceof Node<?>) {
 					node =(Node<T>) node.array[array_size - 1].get().data;
 					index = 1;
 				}
-			} else if(node.array[index].get().data != right_null && node.array[index + 1].get().data == right_null)
-				return new NodeHint<>(node, index);
-			else if (node.array[index].get().data == right_null)
-				index--;
-			else 
-				index++;
+				else {
+					System.out.println("find right problem");
+				}
+			}
 		}
+		if(index == 0) {
+			if (node.array[0].get().data instanceof Node<?>) {
+				node =(Node<T>) node.array[0].get().data;
+				index = array_size - 2;
+			} else {
+				System.out.println("find right problem");
+			}
+		}
+		while(node.array[index].get().data == right_null
+				&& (node.array[index + 1].get().data != right_seal)) {
+			index--;
+			if(index == 0) {
+				if (node.array[0].get().data instanceof Node<?>) {
+					node =(Node<T>) node.array[0].get().data;
+					index = array_size - 2;
+				} else {
+					System.out.println("find right problem");
+				}
+			}
+		}
+		return new NodeHint<>(node, index);
 	}
 
 	NodeHint<T> updateLeftHint(NodeHint<T> old, Node<T> newNode, int newIndex) {
@@ -247,7 +201,7 @@ public class UnboundedDequeue<T> {
 							this.updateLeftHint(hintCopy, edgeNode, 1);
 							NodeHint<T> rightHint = this.findRightEdge(this.rightNodeHint.get());
 							this.updateRightHint(rightHint, rightHint.buffer, rightHint.loc);
-							// retire? 
+							// retire?
 						}
 					}
 				} // end straddling edge
@@ -330,16 +284,13 @@ public class UnboundedDequeue<T> {
 							return;
 						}
 					}
-					/**
-					 *  FROM HERE 
-					 */
 					else if(farCopy.data == right_seal) {
 						if(in.compareAndSet(inCopy,  new DequeueSlot<>(inCopy.data, inCopy.count + 1))
 								&& out.compareAndSet(outCopy, new DequeueSlot<>(right_null, outCopy.count + 1))) {
 							this.updateRightHint(hintCopy, edgeNode, 1);
 							NodeHint<T> leftHint = this.findLeftEdge(this.leftNodeHint.get());
 							this.updateRightHint(leftHint, leftHint.buffer, leftHint.loc);
-							// retire? 
+							// retire?
 						}
 					}
 				} // end straddling edge

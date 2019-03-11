@@ -12,19 +12,44 @@ public class TestMain {
 		double seconds;
 		threadPool = Executors.newFixedThreadPool(num_threads);
 		startTime = System.nanoTime(); 
-
+		
+		boolean useThreads = true;
+		
+		if(!useThreads) {
+			for(int i = 0; i < 1000000; i++) {
+				switch(i % 4) {
+					case 0 :
+						System.out.println(dequeue.pop_left());
+						System.out.println(dequeue.pop_left());
+						break;
+					case 1 : 
+						dequeue.push_left(i);
+						break;
+					case 2 : 
+						dequeue.push_right(i);
+						break;
+					case 3 : 
+						System.out.println(dequeue.pop_right());
+						break;
+					default :;
+						
+				}
+			}
+		}
 
 
 		
-		for(int j = 0; j < num_threads; j++) {
-			threadPool.execute(new QueueThread(j));
+		if(useThreads) {
+			for(int j = 0; j < num_threads; j++) {
+				threadPool.execute(new QueueThread(j));
+			}
+			System.out.println("Threads started");
+			threadPool.shutdown();
+	
+			while (!threadPool.isTerminated()) {
+				Thread.sleep(1);
+	        }
 		}
-		System.out.println("Threads started");
-		threadPool.shutdown();
-
-		while (!threadPool.isTerminated()) {
-			Thread.sleep(1);
-        }
         
 		estimatedTime = System.nanoTime() - startTime;
 		seconds = estimatedTime / 1e9;
@@ -47,8 +72,10 @@ public class TestMain {
         		dequeue.push_right(i);
         		dequeue.push_right(i);
         		dequeue.push_left(1);
-        		dequeue.pop_left();
-        		//dequeue.pop_right();
+        		System.out.println(dequeue.pop_left());
+        		System.out.println(dequeue.pop_left());
+        		System.out.println(dequeue.pop_right());
+        		System.out.println(dequeue.pop_right());
     		}
     	}
     }
