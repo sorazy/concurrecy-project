@@ -15,54 +15,157 @@ public class UnboundedDequeue<T> {
 		this.leftNodeHint.get().loc = this.leftNodeHint.get().buffer.leftHint;
 		this.rightNodeHint.get().loc = this.rightNodeHint.get().buffer.rightHint;
 	}
+	
+	/*
+	 * NodeHint<T> findLeftEdge(NodeHint<T> hint) {
+		Node<T> node = hint.buffer;
+		int index = hint.loc;
+		while(true) {
+			while(node.array[0].get().data instanceof Node<?>) {
+					node = (Node<T>) node.array[0].get().data;
+					index = array_size - 2;
+			}
+			if(index == 0) {
+				if(node.array[0].get().data instanceof Node<?>)
+					return new NodeHint<>((Node<T>) node.array[0].get().data, array_size - 2);
+				return this.rightNodeHint.get();
+			}
+			else if(index == array_size  - 1) {
+				if (node.array[array_size - 1].get().data instanceof Node<?>)
+					return new NodeHint<>((Node<T>) node.array[array_size - 1].get().data, 1);
+				else 
+					return this.leftNodeHint.get();
+			} else if(node.array[index].get().data != left_null && node.array[index - 1].get().data == left_null)
+				return new NodeHint<>(node, index);
+			else if (node.array[index].get().data == left_null)
+				index++;
+			else 
+				index--;
+		}
+	}
+	 */
 
 	@SuppressWarnings("unchecked")
 	NodeHint<T> findLeftEdge(NodeHint<T> hint) {
+		Node<T> node = hint.buffer;
+		int index = (hint.loc < hint.buffer.leftHint) ? hint.loc : hint.buffer.leftHint;
+		int count = 0;
+		
+		while(node.array[0].get().data instanceof Node<?>) {
+			node = (Node<T>) node.array[0].get().data;
+			index = array_size - 2;
+		}
 		while(true) {
-			if(hint.loc == array_size - 1) {
-				hint.buffer = (Node<T>) hint.buffer.array[array_size - 1].get().data;
-				hint.loc = 1;
-			}
-			if(hint.buffer.array[hint.loc].get().data != left_null) 
-				return hint;
-			hint.loc++;
+			count++;
+			if(count > 1000)
+				System.out.println();
+			
+			if(index == 0) {
+				if(node.array[0].get().data instanceof Node<?>) {
+					node = (Node<T>) node.array[0].get().data;
+					index = array_size - 2;
+				}
+			} else if(index == array_size  - 1) {
+				if (node.array[array_size - 1].get().data instanceof Node<?>) {
+					node =(Node<T>) node.array[array_size - 1].get().data;
+					index = 1;
+					return new NodeHint<>(node, index);
+				}
+			} 
+			
+			if(node.array[index].get().data != left_null && node.array[index].get().data != right_seal && node.array[index - 1].get().data == left_null)
+				return new NodeHint<>(node, index);
+			else if (node.array[index].get().data == left_null)
+				index++;
+			else 
+				index--;
 		}
 	}
 
+	/*
+	 * NodeHint<T> findRightEdge(NodeHint<T> hint) {
+		Node<T> node = hint.buffer;
+		int index = hint.loc;
+		int count = 0;
+		while(true) {
+			if(count == 1000) {
+				System.out.println("Data");
+				System.out.println("hint : " + node);
+				System.out.println("index : " + index);
+			}
+			count++;
+			while(node.array[array_size - 1].get().data instanceof Node<?>) {
+				node = (Node<T>) node.array[array_size - 1].get().data;
+				index = 1;
+		}
+			if(index == 0) {
+				if(node.array[0].get().data instanceof Node<?>)
+					return new NodeHint<>((Node<T>) node.array[0].get().data, array_size - 2);
+				return this.rightNodeHint.get();
+			} else if(index == array_size  - 1) {
+				if (node.array[array_size - 1].get().data instanceof Node<?>)
+					return new NodeHint<>((Node<T>) node.array[array_size - 1].get().data, 1);
+				else 
+					return this.leftNodeHint.get();
+			}else if(node.array[index].get().data != right_null && node.array[index - 1].get().data == right_null)
+				return new NodeHint<>(node, index);
+			else if (node.array[index].get().data == right_null)
+				index--;
+			else 
+				index++;
+		}
+	}
+
+	 */
 	@SuppressWarnings("unchecked")
 	NodeHint<T> findRightEdge(NodeHint<T> hint) {
+		Node<T> node = hint.buffer;
+		int index = hint.loc;
+		int count = 0;
+		
+		while(node.array[array_size - 1].get().data instanceof Node<?>) {
+			node = (Node<T>) node.array[array_size - 1].get().data;
+			index = 1;
+		}
+		
 		while(true) {
-			if(hint.loc == 0) {
-				hint.buffer = (Node<T>) hint.buffer.array[0].get().data;
-				hint.loc = array_size - 2;
-			}
 			
-			if(hint.buffer.array[hint.loc].get().data != right_null) {
-				return hint;
-			}
-			hint.loc--;
-
+			count++;
+			if(count > 1000)
+				System.out.println();
+			
+			
+			if(index == 0) {
+				if(node.array[0].get().data instanceof Node<?>) {
+					node = (Node<T>) node.array[0].get().data;
+					index = array_size - 2;
+				}
+			} else if(index == array_size  - 1) {
+				if (node.array[array_size - 1].get().data instanceof Node<?>) {
+					node =(Node<T>) node.array[array_size - 1].get().data;
+					index = 1;
+				}
+			} else if(node.array[index].get().data != right_null && node.array[index + 1].get().data == right_null)
+				return new NodeHint<>(node, index);
+			else if (node.array[index].get().data == right_null)
+				index--;
+			else 
+				index++;
 		}
 	}
 
 	NodeHint<T> updateLeftHint(NodeHint<T> old, Node<T> newNode, int newIndex) {
 		NodeHint<T> newHint = new NodeHint<>(newNode, newIndex);
-		if(old.buffer.leftHint != 0 || old.buffer.array[0] == left_null)
-			old.buffer.leftHint = newIndex;
-		if(this.leftNodeHint.compareAndSet(old, newHint))
-			return newHint;
-		else
-			return null;
+		this.leftNodeHint.compareAndSet(old, newHint);
+		old.buffer.leftHint = newIndex;
+		return newHint;
 	}
 
 	NodeHint<T> updateRightHint(NodeHint<T> old, Node<T> newNode, int newIndex) {
 		NodeHint<T> newHint = new NodeHint<>(newNode, newIndex);
-		if(old.buffer.rightHint != array_size - 1 || old.buffer.array[array_size - 1] == right_null)
-			old.buffer.rightHint = newIndex;
-		if(this.rightNodeHint.compareAndSet(old, newHint))
-			return newHint;
-		else
-			return null;
+		this.rightNodeHint.compareAndSet(old, newHint);
+		old.buffer.rightHint = newIndex;
+		return newHint;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -75,8 +178,14 @@ public class UnboundedDequeue<T> {
 		DequeueSlot<Object> inCopy;
 		AtomicReference<DequeueSlot<Object>> out;
 		DequeueSlot<Object> outCopy;
-
+		int count = 0;
+		
 		while(true) {
+
+			count++;
+			if(count > 1000)
+				System.out.println();
+			
 			hintCopy = this.leftNodeHint.get();
 			edge = this.findLeftEdge(hintCopy);
 			edgeNode = edge.buffer;
@@ -156,8 +265,16 @@ public class UnboundedDequeue<T> {
 		DequeueSlot<Object> inCopy;
 		AtomicReference<DequeueSlot<Object>> out;
 		DequeueSlot<Object> outCopy;
-
+		int count = 0;
+		
 		while(true) {
+			
+			
+			count++;
+			if(count > 1000)
+				System.out.println();
+			
+			
 			hintCopy = this.rightNodeHint.get();
 			edge = this.findRightEdge(hintCopy);
 			edgeNode = edge.buffer;
@@ -167,7 +284,7 @@ public class UnboundedDequeue<T> {
 			inCopy = in.get();
 			out = edgeNode.array[edgeIndex + 1];
 			outCopy = out.get();
-
+			
 			if((inCopy.data == (T) right_null || inCopy.data == (T) left_seal)
 					|| (edgeIndex != array_size - 2 && outCopy.data != (T) right_null)
 					|| (edgeIndex == 0 && inCopy.data != (T) left_null))
@@ -240,8 +357,11 @@ public class UnboundedDequeue<T> {
 		DequeueSlot<Object> inCopy;
 		AtomicReference<DequeueSlot<Object>> out;
 		DequeueSlot<Object> outCopy;
-		
+		int count = 0;
 		while(true) {
+			count++;
+			if(count > 1000)
+				System.out.println();
 			hintCopy = this.leftNodeHint.get();
 			edge = this.findLeftEdge(hintCopy);
 			edgeNode = edge.buffer;
@@ -339,8 +459,11 @@ public class UnboundedDequeue<T> {
 		DequeueSlot<Object> inCopy;
 		AtomicReference<DequeueSlot<Object>> out;
 		DequeueSlot<Object> outCopy;
-		
+		int count = 0;
 		while(true) {
+			count++;
+			if(count > 1000)
+				System.out.println();
 			hintCopy = this.rightNodeHint.get();
 			edge = this.findRightEdge(hintCopy);
 			edgeNode = edge.buffer;
