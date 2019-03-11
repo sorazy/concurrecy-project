@@ -6,7 +6,7 @@ public class UnboundedDequeue<T> {
 	public static Object left_seal = new Object();
 	public static Object right_seal = new Object();
 	// Set array size here
-	public static final int array_size = 10; 
+	public static final int array_size = 1000; 
 	private AtomicReference<NodeHint<T>> leftNodeHint, rightNodeHint;
 
 	public UnboundedDequeue() {
@@ -16,17 +16,11 @@ public class UnboundedDequeue<T> {
 		this.rightNodeHint.get().loc = this.rightNodeHint.get().buffer.rightHint;
 	}
 	
-
-
 	@SuppressWarnings("unchecked")
 	NodeHint<T> findLeftEdge(NodeHint<T> hint) {
 		Node<T> node = hint.buffer;
 		int index = hint.loc; 
 		
-		while(node.array[0].get().data instanceof Node<?>) {
-			node = (Node<T>) node.array[0].get().data;
-			index = array_size - 2;
-		}
 		while((node.array[index - 1].get().data != left_null) 
 				&& (node.array[index - 1].get().data != left_seal)) {
 			index--;
@@ -67,11 +61,6 @@ public class UnboundedDequeue<T> {
 		Node<T> node = hint.buffer;
 		int index = hint.loc;
 		
-		while(node.array[array_size - 1].get().data instanceof Node<?>) {
-			node = (Node<T>) node.array[array_size - 1].get().data;
-			index = 1;
-		}
-		
 		while((node.array[index + 1].get().data != right_null) 
 				&& (node.array[index + 1].get().data != right_seal)) {
 			index++;
@@ -110,14 +99,14 @@ public class UnboundedDequeue<T> {
 
 	NodeHint<T> updateLeftHint(NodeHint<T> old, Node<T> newNode, int newIndex) {
 		NodeHint<T> newHint = new NodeHint<>(newNode, newIndex);
-		this.leftNodeHint.compareAndSet(old, newHint);
+		this.leftNodeHint.set(newHint);
 		old.buffer.leftHint = newIndex;
 		return newHint;
 	}
 
 	NodeHint<T> updateRightHint(NodeHint<T> old, Node<T> newNode, int newIndex) {
 		NodeHint<T> newHint = new NodeHint<>(newNode, newIndex);
-		this.rightNodeHint.compareAndSet(old, newHint);
+		this.rightNodeHint.set(newHint);
 		old.buffer.rightHint = newIndex;
 		return newHint;
 	}
@@ -137,8 +126,9 @@ public class UnboundedDequeue<T> {
 		while(true) {
 
 			count++;
-			if(count > 1000)
-				System.out.println();
+			if(count > 1000) {
+				count = count + 0;
+			}
 			
 			hintCopy = this.leftNodeHint.get();
 			edge = this.findLeftEdge(hintCopy);
@@ -165,7 +155,7 @@ public class UnboundedDequeue<T> {
 			// edge is straddling or on a boundary
 			else {
 				// check for boundary edge
-				if(outCopy.data == (T) left_null) {
+				if(outCopy.data == left_null) {
 					Node<T> newNode = new Node<>(array_size);
 					newNode.array[array_size - 2].get().data = data;
 					newNode.array[array_size - 1].get().data = edgeNode;
@@ -179,10 +169,11 @@ public class UnboundedDequeue<T> {
 
 				else {
 					Node<T> outNode = (Node<T>) outCopy.data; 
-					AtomicReference<DequeueSlot<Object>> far = ((Node<T>) outCopy.data).array[array_size - 2];
-					DequeueSlot<Object> farCopy = far.get();
 
-					AtomicReference<DequeueSlot<Object>> back = ((Node<T>) outCopy.data).array[array_size - 1];
+					AtomicReference<DequeueSlot<Object>> far = outNode.array[array_size - 2];
+					DequeueSlot<Object> farCopy = far.get();
+					
+					AtomicReference<DequeueSlot<Object>> back = outNode.array[array_size - 1];
 					DequeueSlot<Object> backCopy = back.get();
 
 					if((Node<T>) backCopy.data != edgeNode) continue;
@@ -225,8 +216,9 @@ public class UnboundedDequeue<T> {
 			
 			
 			count++;
-			if(count > 1000)
-				System.out.println();
+			if(count > 1000) {
+				count = count + 0;
+			}
 			
 			
 			hintCopy = this.rightNodeHint.get();
@@ -239,9 +231,9 @@ public class UnboundedDequeue<T> {
 			out = edgeNode.array[edgeIndex + 1];
 			outCopy = out.get();
 			
-			if((inCopy.data == (T) right_null || inCopy.data == (T) left_seal)
-					|| (edgeIndex != array_size - 2 && outCopy.data != (T) right_null)
-					|| (edgeIndex == 0 && inCopy.data != (T) left_null))
+			if((inCopy.data == (T) right_null || inCopy.data == left_seal)
+					|| (edgeIndex != array_size - 2 && outCopy.data != right_null)
+					|| (edgeIndex == 0 && inCopy.data != left_null))
 				continue;
 			
 			
@@ -268,10 +260,12 @@ public class UnboundedDequeue<T> {
 				}
 				else {
 					Node<T> outNode = (Node<T>) outCopy.data; 
-					AtomicReference<DequeueSlot<Object>> far = ((Node<T>) outCopy.data).array[1];
+//					AtomicReference<DequeueSlot<Object>> far = ((Node<T>) outCopy.data).array[1];
+//					DequeueSlot<Object> farCopy = far.get();
+					AtomicReference<DequeueSlot<Object>> far = outNode.array[1];
 					DequeueSlot<Object> farCopy = far.get();
 
-					AtomicReference<DequeueSlot<Object>> back = ((Node<T>) outCopy.data).array[0];
+					AtomicReference<DequeueSlot<Object>> back = outNode.array[0];
 					DequeueSlot<Object> backCopy = back.get();
 
 					if((Node<T>) backCopy.data != edgeNode) continue;
@@ -287,7 +281,7 @@ public class UnboundedDequeue<T> {
 					else if(farCopy.data == right_seal) {
 						if(in.compareAndSet(inCopy,  new DequeueSlot<>(inCopy.data, inCopy.count + 1))
 								&& out.compareAndSet(outCopy, new DequeueSlot<>(right_null, outCopy.count + 1))) {
-							this.updateRightHint(hintCopy, edgeNode, 1);
+							this.updateRightHint(hintCopy, edgeNode, array_size - 2);
 							NodeHint<T> leftHint = this.findLeftEdge(this.leftNodeHint.get());
 							this.updateRightHint(leftHint, leftHint.buffer, leftHint.loc);
 							// retire?
@@ -311,8 +305,9 @@ public class UnboundedDequeue<T> {
 		int count = 0;
 		while(true) {
 			count++;
-			if(count > 1000)
-				System.out.println();
+			if(count > 1000) {
+				count = count + 0;
+			}
 			hintCopy = this.leftNodeHint.get();
 			edge = this.findLeftEdge(hintCopy);
 			edgeNode = edge.buffer;
@@ -389,7 +384,6 @@ public class UnboundedDequeue<T> {
 					if(inCopy.data == right_null && in.get() == inCopy) {
 						return null;
 					}
-					
 					if(out.compareAndSet(outCopy, new DequeueSlot<>(left_null, outCopy.count + 1))
 							&& in.compareAndSet(inCopy, new DequeueSlot<>(left_null, inCopy.count + 1))) {
 						this.updateLeftHint(hintCopy, edgeNode, 2);
@@ -414,7 +408,7 @@ public class UnboundedDequeue<T> {
 		while(true) {
 			count++;
 			if(count > 1000)
-				System.out.println();
+				count = count + 0;
 			hintCopy = this.rightNodeHint.get();
 			edge = this.findRightEdge(hintCopy);
 			edgeNode = edge.buffer;
@@ -479,7 +473,7 @@ public class UnboundedDequeue<T> {
 								&& out.compareAndSet(outCopy, new DequeueSlot<>(right_null, outCopy.count + 1))) {
 							hintCopy = this.updateRightHint(hintCopy, edgeNode, array_size - 2);
 							NodeHint<T> left = this.findLeftEdge(this.leftNodeHint.get());
-							this.updateRightHint(left, left.buffer, left.loc);
+							this.updateLeftHint(left, left.buffer, left.loc);
 							// retire?
 							inCopy.count++;
 							outCopy.data = right_null;

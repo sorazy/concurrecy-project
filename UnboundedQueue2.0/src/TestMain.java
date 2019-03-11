@@ -2,7 +2,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class TestMain {
-	public static UnboundedDequeue<Integer> dequeue;
+	public static UnboundedDequeue<String> dequeue;
 	public static final int num_threads = 5;
 
 	public static void main(String[] args) throws InterruptedException {
@@ -19,17 +19,19 @@ public class TestMain {
 			for(int i = 0; i < 1000000; i++) {
 				switch(i % 4) {
 					case 0 :
-						System.out.println(dequeue.pop_left());
-						System.out.println(dequeue.pop_left());
+						dequeue.pop_left();
+						dequeue.pop_left();
 						break;
 					case 1 : 
-						dequeue.push_left(i);
+						dequeue.push_left("1");
+						dequeue.push_left("3");
 						break;
 					case 2 : 
-						dequeue.push_right(i);
+						dequeue.push_right("2");
+						dequeue.push_right("4");
 						break;
 					case 3 : 
-						System.out.println(dequeue.pop_right());
+						dequeue.pop_right();
 						break;
 					default :;
 						
@@ -43,7 +45,6 @@ public class TestMain {
 			for(int j = 0; j < num_threads; j++) {
 				threadPool.execute(new QueueThread(j));
 			}
-			System.out.println("Threads started");
 			threadPool.shutdown();
 	
 			while (!threadPool.isTerminated()) {
@@ -66,16 +67,20 @@ public class TestMain {
     	}
     	public void run() {
     		int n;
-    		int numOps = 10000;
+    		int numOps = 100000;
     		for(n = 0; n < numOps; n++) {
-        		dequeue.push_left(1);
-        		dequeue.push_right(i);
-        		dequeue.push_right(i);
-        		dequeue.push_left(1);
-        		System.out.println(dequeue.pop_left());
-        		System.out.println(dequeue.pop_left());
-        		System.out.println(dequeue.pop_right());
-        		System.out.println(dequeue.pop_right());
+        		dequeue.push_left("Megan is sexy");
+        		dequeue.push_right("Megan is smart");
+        		dequeue.push_right("Megan is sweet");
+        		dequeue.push_left("I love Megan");
+//        		System.out.println(dequeue.pop_left());
+//        		System.out.println(dequeue.pop_left());
+//        		System.out.println(dequeue.pop_right());
+//        		System.out.println(dequeue.pop_right());
+//        		dequeue.pop_left();
+        		dequeue.pop_left();
+ //       		dequeue.pop_right();
+        		dequeue.pop_right();
     		}
     	}
     }
