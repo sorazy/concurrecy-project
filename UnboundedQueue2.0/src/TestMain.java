@@ -67,20 +67,20 @@ public class TestMain {
     	}
     	public void run() {
     		int n;
-    		int numOps = 100000;
+    		int numOps = 1000;
     		for(n = 0; n < numOps; n++) {
-        		dequeue.push_left("Megan is sexy");
-        		dequeue.push_right("Megan is smart");
-        		dequeue.push_right("Megan is sweet");
-        		dequeue.push_left("I love Megan");
-//        		System.out.println(dequeue.pop_left());
-//        		System.out.println(dequeue.pop_left());
-//        		System.out.println(dequeue.pop_right());
-//        		System.out.println(dequeue.pop_right());
+        		dequeue.push_left("This Program is Frustrating");
+        		dequeue.push_right("So many components");
+        		dequeue.push_right("So many infinite loops");
+        		dequeue.push_left("monkaS");
+        		System.out.println(dequeue.pop_left());
+        		System.out.println(dequeue.pop_left());
+        		System.out.println(dequeue.pop_right());
+        		System.out.println(dequeue.pop_right());
 //        		dequeue.pop_left();
-        		dequeue.pop_left();
- //       		dequeue.pop_right();
-        		dequeue.pop_right();
+//        		dequeue.pop_left();
+//        		dequeue.pop_right();
+//        		dequeue.pop_right();
     		}
     	}
     }

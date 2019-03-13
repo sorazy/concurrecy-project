@@ -354,11 +354,16 @@ public class UnboundedDequeue<T> {
 						if(inCopy.data == right_null || inCopy.data == right_seal && in.get() == inCopy) {
 							return null;
 						}
-						if(in.compareAndSet(inCopy,	new DequeueSlot<>(inCopy.data, inCopy.count + 1))
-								&& far.compareAndSet(farCopy, new DequeueSlot<>(left_seal, farCopy.count + 1))) {
-							farCopy.data = left_seal;
-							farCopy.count++;
-							inCopy.count++;
+						
+						DequeueSlot<Object> tempInner = new DequeueSlot<>(inCopy.data, inCopy.count + 1);
+						DequeueSlot<Object> tempFar = new DequeueSlot<>(left_seal, farCopy.count + 1);
+						if(in.compareAndSet(inCopy,	tempInner)
+								&& far.compareAndSet(farCopy, tempFar)) {
+//							farCopy.data = left_seal;
+//							farCopy.count++;
+//							inCopy.count++;
+							inCopy = tempInner;
+							farCopy = tempFar;
 						}
 					}
 					
@@ -367,16 +372,16 @@ public class UnboundedDequeue<T> {
 						if(inCopy.data == right_null && in.get() == inCopy) {
 							return null;
 						}
-						
-						if(in.compareAndSet(inCopy, new DequeueSlot<>(inCopy.data, inCopy.count + 1))
-								&& out.compareAndSet(outCopy, new DequeueSlot<>(left_null, outCopy.count + 1))) {
+						DequeueSlot<Object> tempInner = new DequeueSlot<>(inCopy.data, inCopy.count + 1);
+						DequeueSlot<Object> tempOuter = new DequeueSlot<>(left_null, outCopy.count + 1);
+						if(in.compareAndSet(inCopy, tempInner)
+								&& out.compareAndSet(outCopy, tempOuter)) {
 							hintCopy = this.updateLeftHint(hintCopy, edgeNode, 1);
 							NodeHint<T> right = this.findRightEdge(this.rightNodeHint.get());
 							this.updateRightHint(right, right.buffer, right.loc);
 							// retire?
-							inCopy.count++;
-							outCopy.data = left_null;
-							outCopy.count++;
+							inCopy = tempInner;
+							outCopy = tempOuter;
 						}
 					}
 				}
@@ -455,11 +460,12 @@ public class UnboundedDequeue<T> {
 						if(inCopy.data == left_null || inCopy.data == left_seal && in.get() == inCopy) {
 							return null;
 						}
-						if(in.compareAndSet(inCopy,	new DequeueSlot<>(inCopy.data, inCopy.count + 1))
-								&& far.compareAndSet(farCopy, new DequeueSlot<>(right_seal, farCopy.count + 1))) {
-							farCopy.data = right_seal;
-							farCopy.count++;
-							inCopy.count++;
+						DequeueSlot<Object> tempInner = new DequeueSlot<>(inCopy.data, inCopy.count + 1);
+						DequeueSlot<Object> tempFar = new DequeueSlot<>(right_seal, farCopy.count + 1);
+						if(in.compareAndSet(inCopy,	tempInner)
+								&& far.compareAndSet(farCopy, tempFar)) {
+							farCopy = tempFar;
+							inCopy = tempInner;
 						}
 					}
 					
@@ -468,16 +474,16 @@ public class UnboundedDequeue<T> {
 						if(inCopy.data == left_null && in.get() == inCopy) {
 							return null;
 						}
-						
-						if(in.compareAndSet(inCopy, new DequeueSlot<>(inCopy.data, inCopy.count + 1))
-								&& out.compareAndSet(outCopy, new DequeueSlot<>(right_null, outCopy.count + 1))) {
+						DequeueSlot<Object> tempInner = new DequeueSlot<>(inCopy.data, inCopy.count + 1);
+						DequeueSlot<Object> tempOuter = new DequeueSlot<>(right_null, outCopy.count + 1);
+						if(in.compareAndSet(inCopy, tempInner)
+								&& out.compareAndSet(outCopy, tempOuter)) {
 							hintCopy = this.updateRightHint(hintCopy, edgeNode, array_size - 2);
 							NodeHint<T> left = this.findLeftEdge(this.leftNodeHint.get());
 							this.updateLeftHint(left, left.buffer, left.loc);
 							// retire?
-							inCopy.count++;
-							outCopy.data = right_null;
-							outCopy.count++;
+							inCopy = tempInner;
+							outCopy = tempOuter;
 						}
 					}
 				}
