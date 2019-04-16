@@ -1,0 +1,18 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "CodeLens (Launch) - Test",
+            "request": "launch",
+            "mainClass": "Test",
+            "projectName": "STM_5aa2cece"
+        },
+        {
+            "type": "java",
+            "name": "CodeLens (Launch) - Account",
+            "request": "launch",
+            "mainClass": "Account",
+            "projectName": "STM_5aa2cece"
+        }
+    ]
+}
