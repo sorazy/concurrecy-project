@@ -1,5 +1,6 @@
 package com.mycompany.app;
 
+// A simple "bank account" example to show the idea of concurrency
 import org.multiverse.api.StmUtils;
 import org.multiverse.api.Txn;
 import org.multiverse.api.callables.TxnCallable;
