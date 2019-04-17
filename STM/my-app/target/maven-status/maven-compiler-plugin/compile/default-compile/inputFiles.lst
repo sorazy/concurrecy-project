@@ -1,7 +1,3 @@
 /mnt/d/ucf/sp19/parallel/concurrency-project/STM/my-app/src/main/java/com/mycompany/app/App.java
-/mnt/d/ucf/sp19/parallel/concurrency-project/STM/my-app/src/main/java/com/mycompany/app/LockFreeExchanger.java
-/mnt/d/ucf/sp19/parallel/concurrency-project/STM/my-app/src/main/java/com/mycompany/app/Account.java
+/mnt/d/ucf/sp19/parallel/concurrency-project/STM/my-app/src/main/java/com/mycompany/app/STMUnboundedDeque.java
 /mnt/d/ucf/sp19/parallel/concurrency-project/STM/my-app/src/main/java/com/mycompany/app/UnboundedDequeue.java
-/mnt/d/ucf/sp19/parallel/concurrency-project/STM/my-app/src/main/java/com/mycompany/app/EliminationArray.java
-/mnt/d/ucf/sp19/parallel/concurrency-project/STM/my-app/src/main/java/com/mycompany/app/Node.java
-/mnt/d/ucf/sp19/parallel/concurrency-project/STM/my-app/src/main/java/com/mycompany/app/RangePolicy.java

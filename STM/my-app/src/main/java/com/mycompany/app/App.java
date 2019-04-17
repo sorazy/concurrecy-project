@@ -1,17 +1,14 @@
 package com.mycompany.app;
 
-import java.io.*;
-import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.multiverse.api.StmUtils;
 
 public class App extends Thread
 {
-    public static UnboundedDequeue<Integer> q = new UnboundedDequeue<>();
+    public static STMUnboundedDeque<Integer> q = new STMUnboundedDeque<>();
     public static AtomicInteger counter = new AtomicInteger(0);
-    public static final int CALLS = 10000, THREADS = 5;
+    public static final int CALLS = 10000, THREADS = 7;
     public static int [] pusharray = new int[CALLS];
     public static int [] poparray = new int[CALLS];
 
@@ -24,41 +21,61 @@ public class App extends Thread
 
             if (r1 >= 0.50)
             {
-                push_pop_left(i);
+                if (r2 >= 0.50)
+                    q.push_left(i);
+                else
+                    q.push_right(i);                    
             }
             else try
             {
-                push_pop_right(i);
+                if (r2 >= 0.50)
+                    q.pop_left();
+                else
+                    q.pop_right();
             }
             catch(Exception e)
             {
                 ;
             }
         }
-    }
 
-    public void push_pop_left(final int data)
-    {
-        StmUtils.atomic(new Runnable() {
-            @Override
-            public void run()
-            {
-                q.push_left(data);
-                q.pop_left();
-            }
-        });
-    }
+        // for (int i = counter.getAndIncrement(); i < CALLS; i = counter.getAndIncrement())
+		// {
+        //     double r2 = Math.random();
+        //     pusharray[i]++;
+        //     if (r2 >= 0.50)
+        //         q.push_left(i);
+        //     else
+        //         q.push_right(i);   
+        // }
 
-    public void push_pop_right(final int data)
-    {
-        StmUtils.atomic(new Runnable() {
-            @Override
-            public void run()
-            {
-                q.push_left(data);
-                q.pop_left();
-            }
-        });
+        // System.out.println("Thread #" + currentThread().getId() + " is sleeping...");
+        // try{
+        //     Thread.sleep(1000);
+        // } catch (Exception e)
+        // {
+        //     ;
+        // }
+        // System.out.println("Thread #" + currentThread().getId() + " WOKE UP!!!");
+        
+
+        // for (int i = counter.getAndDecrement(); i > 0; i = counter.getAndDecrement())
+        // {
+        //     double r2 = Math.random();
+
+        //     if (r2 >= 0.50)
+        //     {
+        //         Integer j = q.pop_left();
+        //         if (j != null)
+        //             pusharray[j]++;
+        //     }
+        //     else
+        //     {
+        //         Integer j = q.pop_right();
+        //         if (j != null)
+        //             pusharray[j]++;
+        //     }
+        // }
     }
 
     public static void main(String [] args) throws Exception
@@ -84,10 +101,10 @@ public class App extends Thread
 			total += end - start;
 
 			// Reset everything for next round
-			q = new UnboundedDequeue<>();
+			q = new STMUnboundedDeque<>();
 			counter = new AtomicInteger(0);
         }
-        
+
         System.out.println("Average time to for " + THREADS + " threads to execute " + CALLS + " calls: " + (total / 1000) + "ns");
         return;
     }
