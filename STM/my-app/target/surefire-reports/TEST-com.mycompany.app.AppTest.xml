@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" name="com.mycompany.app.AppTest" time="0.06" tests="1" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" name="com.mycompany.app.AppTest" time="0.04" tests="1" errors="0" skipped="0" failures="0">
   <properties>
     <property name="awt.toolkit" value="sun.awt.X11.XToolkit"/>
     <property name="java.specification.version" value="10"/>
@@ -15,7 +15,7 @@
     <property name="os.name" value="Linux"/>
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="sun.boot.library.path" value="/usr/lib/jvm/java-11-openjdk-amd64/lib"/>
-    <property name="sun.java.command" value="/mnt/d/ucf/sp19/parallel/concurrency-project/STM/my-app/target/surefire/surefirebooter5650246016368089874.jar /mnt/d/ucf/sp19/parallel/concurrency-project/STM/my-app/target/surefire 2019-04-17T19-15-15_887-jvmRun1 surefire4229769380334912801tmp surefire_02909603488176943699tmp"/>
+    <property name="sun.java.command" value="/mnt/d/ucf/sp19/parallel/concurrency-project/STM/my-app/target/surefire/surefirebooter5597695509910965683.jar /mnt/d/ucf/sp19/parallel/concurrency-project/STM/my-app/target/surefire 2019-04-19T22-43-52_484-jvmRun1 surefire13899698762739256933tmp surefire_015073259157016778914tmp"/>
     <property name="jdk.debug" value="release"/>
     <property name="surefire.test.class.path" value="/mnt/d/ucf/sp19/parallel/concurrency-project/STM/my-app/target/test-classes:/mnt/d/ucf/sp19/parallel/concurrency-project/STM/my-app/target/classes:/home/soliman/.m2/repository/org/multiverse/multiverse-core/0.7.0/multiverse-core-0.7.0.jar:/home/soliman/.m2/repository/junit/junit/4.11/junit-4.11.jar:/home/soliman/.m2/repository/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar:"/>
     <property name="sun.cpu.endian" value="little"/>
@@ -31,7 +31,7 @@
     <property name="java.specification.name" value="Java Platform API Specification"/>
     <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
     <property name="java.awt.graphicsenv" value="sun.awt.X11GraphicsEnvironment"/>
-    <property name="surefire.real.class.path" value="/mnt/d/ucf/sp19/parallel/concurrency-project/STM/my-app/target/surefire/surefirebooter5650246016368089874.jar"/>
+    <property name="surefire.real.class.path" value="/mnt/d/ucf/sp19/parallel/concurrency-project/STM/my-app/target/surefire/surefirebooter5597695509910965683.jar"/>
     <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
     <property name="java.runtime.version" value="10.0.2+13-Ubuntu-1ubuntu0.18.04.4"/>
     <property name="user.name" value="soliman"/>
@@ -56,5 +56,5 @@
     <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
     <property name="java.class.version" value="54.0"/>
   </properties>
-  <testcase name="shouldAnswerWithTrue" classname="com.mycompany.app.AppTest" time="0.002"/>
+  <testcase name="shouldAnswerWithTrue" classname="com.mycompany.app.AppTest" time="0.004"/>
 </testsuite>

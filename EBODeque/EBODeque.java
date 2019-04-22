@@ -1,18 +1,29 @@
-package com.mycompany.app;
-
 import java.util.concurrent.atomic.AtomicReference;
 
-public class UnboundedDequeue<T> {
+public class EBODeque<T> {
 	public static Object left_null = new Object();
 	public static Object right_null = new Object();
 	public static Object left_seal = new Object();
-	public static Object right_seal = new Object();
+    public static Object right_seal = new Object();
+
 	// Set array size here
 	public static final int array_size = 1000; 
-	AtomicReference<NodeHint<Object>> leftNodeHint;
-    private AtomicReference<NodeHint<Object>> rightNodeHint;
+	private AtomicReference<NodeHint<T>> leftNodeHint, rightNodeHint;
 
-	public UnboundedDequeue() {
+    // EB Array stuff
+    public static final int MIN_DELAY = 1000, MAX_DELAY = 100000;
+    public static final int CAPACITY = 100;    
+    EliminationArray<T> right_array = new EliminationArray<>(CAPACITY);  
+    EliminationArray<T> left_array = new EliminationArray<>(CAPACITY);  
+
+    static ThreadLocal<RangePolicy> policy = new ThreadLocal<RangePolicy>()
+    {
+        protected synchronized RangePolicy initialValue() {
+            return new RangePolicy(CAPACITY);
+        }
+    };
+
+	public EBODeque() {
 		this.leftNodeHint = new AtomicReference<>(new NodeHint<>(new Node<>(array_size / 2), 0));
 		this.rightNodeHint = new AtomicReference<>(new NodeHint<>(this.leftNodeHint.get().buffer, 0));
 		this.leftNodeHint.get().loc = this.leftNodeHint.get().buffer.leftHint;
@@ -102,14 +113,14 @@ public class UnboundedDequeue<T> {
 
 	NodeHint<T> updateLeftHint(NodeHint<T> old, Node<T> newNode, int newIndex) {
 		NodeHint<T> newHint = new NodeHint<>(newNode, newIndex);
-		this.leftNodeHint.set((NodeHint<Object>) newHint);
+		this.leftNodeHint.set(newHint);
 		old.buffer.leftHint = newIndex;
 		return newHint;
 	}
 
 	NodeHint<T> updateRightHint(NodeHint<T> old, Node<T> newNode, int newIndex) {
 		NodeHint<T> newHint = new NodeHint<>(newNode, newIndex);
-		this.rightNodeHint.set((NodeHint<Object>) newHint);
+		this.rightNodeHint.set(newHint);
 		old.buffer.rightHint = newIndex;
 		return newHint;
 	}
@@ -125,7 +136,9 @@ public class UnboundedDequeue<T> {
 		AtomicReference<DequeueSlot<Object>> out;
 		DequeueSlot<Object> outCopy;
 		int count = 0;
-		
+		RangePolicy range = policy.get();
+        int limit = MIN_DELAY;
+
 		while(true) {
 
 			count++;
@@ -133,7 +146,7 @@ public class UnboundedDequeue<T> {
 				count = count + 0;
 			}
 			
-			hintCopy = (NodeHint<T>) this.leftNodeHint.get();
+			hintCopy = this.leftNodeHint.get();
 			edge = this.findLeftEdge(hintCopy);
 			edgeNode = edge.buffer;
 			edgeIndex = edge.loc;
@@ -142,21 +155,25 @@ public class UnboundedDequeue<T> {
 			inCopy = in.get();
 			out = edgeNode.array[edgeIndex - 1];
 			outCopy = out.get();
+            boolean flag = false;
+
+            // delay tells us long are we going to search the EA for
+            int delay = (int)(Math.random() * limit);
 
 			if((inCopy.data == (T) left_null || inCopy.data == (T) right_seal)
 					|| (edgeIndex != 1 && outCopy.data != (T) left_null)
 					|| (edgeIndex == array_size - 1 && inCopy.data != (T) right_null))
-				continue;
+				flag = true;
 
 			// interior push
-			if(edgeIndex != 1) {
+			if(!flag && edgeIndex != 1) {
 				if(in.compareAndSet(inCopy, new DequeueSlot<>(inCopy.data, inCopy.count + 1))
-						&& out.compareAndSet(outCopy, (DequeueSlot<Object>) new DequeueSlot<>(data, outCopy.count + 1)))
+						&& out.compareAndSet(outCopy, new DequeueSlot<>(data, outCopy.count + 1)))
 					this.updateLeftHint(hintCopy, edgeNode, edgeIndex - 1);
 				return;
 			}
 			// edge is straddling or on a boundary
-			else {
+			else if (!flag) {
 				// check for boundary edge
 				if(outCopy.data == left_null) {
 					Node<T> newNode = new Node<>(array_size);
@@ -164,7 +181,7 @@ public class UnboundedDequeue<T> {
 					newNode.array[array_size - 1].get().data = edgeNode;
 
 					if(in.compareAndSet(inCopy, new DequeueSlot<>(inCopy.data, inCopy.count + 1))
-							&& out.compareAndSet(outCopy, new DequeueSlot<>(newNode.array[array_size - 2].get().data, outCopy.count + 1))) {
+							&& out.compareAndSet(outCopy, new DequeueSlot<>(newNode, outCopy.count + 1))) {
 						this.updateLeftHint(hintCopy, newNode, array_size - 2);
 						return;
 					}
@@ -179,28 +196,46 @@ public class UnboundedDequeue<T> {
 					AtomicReference<DequeueSlot<Object>> back = outNode.array[array_size - 1];
 					DequeueSlot<Object> backCopy = back.get();
 
-					if((Node<T>) backCopy.data != edgeNode) continue;
+                    if((Node<T>) backCopy.data != edgeNode)
+                        flag = true;
 
 					// check state for straddling push
-					if(farCopy.data == left_null) {
+					if(!flag && farCopy.data == left_null) {
 						if(in.compareAndSet(inCopy, new DequeueSlot<>(inCopy.data, inCopy.count + 1))
-								&& far.compareAndSet(farCopy, 
-                                        (DequeueSlot<Object>) new DequeueSlot<>(data, farCopy.count + 1))) {
+								&& far.compareAndSet(farCopy, new DequeueSlot<>(data, farCopy.count + 1))) {
 							this.updateLeftHint(hintCopy, outNode, array_size - 2);
 							return;
 						}
 					}
-					else if(farCopy.data == left_seal) {
+					else if(!flag && farCopy.data == left_seal) {
 						if(in.compareAndSet(inCopy,  new DequeueSlot<>(inCopy.data, inCopy.count + 1))
 								&& out.compareAndSet(outCopy, new DequeueSlot<>(left_null, outCopy.count + 1))) {
 							this.updateLeftHint(hintCopy, edgeNode, 1);
-							NodeHint<T> rightHint = this.findRightEdge((NodeHint<T>) this.rightNodeHint.get());
+							NodeHint<T> rightHint = this.findRightEdge(this.rightNodeHint.get());
 							this.updateRightHint(rightHint, rightHint.buffer, rightHint.loc);
 							// retire?
 						}
 					}
 				} // end straddling edge
-			} // end boundary or straddling edge
+            } // end boundary or straddling edge
+
+            try
+            {
+                // If the EA returns null, that means we found a pop() pair. Return.
+                T otherValue = left_array.visit(data, range.getRange(), delay);
+                if (otherValue == null)
+                {
+                    range.recordEliminationSuccess();
+                    return; // Was able to find a pop() pair :D
+                }
+            }
+            catch (Exception e)
+            {
+                // If we cought an Exception, that means a pop() wasn't found.
+                // Increase the limit and try again :(
+                limit = Math.min(MAX_DELAY, 2 * delay);
+                range.recordEliminationTimeout();
+            }
 		} // end while
 	} // end push_left
 
@@ -215,17 +250,19 @@ public class UnboundedDequeue<T> {
 		AtomicReference<DequeueSlot<Object>> out;
 		DequeueSlot<Object> outCopy;
 		int count = 0;
-		
+
+        // EBOstuff
+        RangePolicy range = policy.get();
+        int limit = MIN_DELAY;
+
 		while(true) {
-			
-			
 			count++;
 			if(count > 1000) {
 				count = count + 0;
 			}
 			
 			
-			hintCopy = (NodeHint<T>) this.rightNodeHint.get();
+			hintCopy = this.rightNodeHint.get();
 			edge = this.findRightEdge(hintCopy);
 			edgeNode = edge.buffer;
 			edgeIndex = edge.loc;
@@ -234,22 +271,26 @@ public class UnboundedDequeue<T> {
 			inCopy = in.get();
 			out = edgeNode.array[edgeIndex + 1];
 			outCopy = out.get();
-			
+            boolean flag = false;
+
+            // delay tells us long are we going to search the EA for
+            int delay = (int)(Math.random() * limit);
+
 			if((inCopy.data == (T) right_null || inCopy.data == left_seal)
 					|| (edgeIndex != array_size - 2 && outCopy.data != right_null)
 					|| (edgeIndex == 0 && inCopy.data != left_null))
-				continue;
+				flag = true;
 			
 			
 			// interior push
-			if(edgeIndex != array_size - 2) {
+			if(!flag && edgeIndex != array_size - 2) {
 				if(in.compareAndSet(inCopy, new DequeueSlot<>(inCopy.data, inCopy.count + 1))
-						&& out.compareAndSet(outCopy, (DequeueSlot<Object>) new DequeueSlot<>(data, outCopy.count + 1)))
+						&& out.compareAndSet(outCopy, new DequeueSlot<>(data, outCopy.count + 1)))
 					this.updateRightHint(hintCopy, edgeNode, edgeIndex + 1);
 				return;
 			}
 			// edge is straddling or on a boundary
-			else {
+			else if (!flag) {
 				// check for boundary edge
 				if(outCopy.data == (T) right_null) {
 					Node<T> newNode = new Node<>(0);
@@ -257,7 +298,7 @@ public class UnboundedDequeue<T> {
 					newNode.array[0].get().data = edgeNode;
 
 					if(in.compareAndSet(inCopy, new DequeueSlot<>(inCopy.data, inCopy.count + 1))
-							&& out.compareAndSet(outCopy, new DequeueSlot<>(newNode.array[1].get().data, outCopy.count + 1))) {
+							&& out.compareAndSet(outCopy, new DequeueSlot<>(newNode, outCopy.count + 1))) {
 						this.updateRightHint(hintCopy, newNode, 1);
 						return;
 					}
@@ -272,28 +313,46 @@ public class UnboundedDequeue<T> {
 					AtomicReference<DequeueSlot<Object>> back = outNode.array[0];
 					DequeueSlot<Object> backCopy = back.get();
 
-					if((Node<T>) backCopy.data != edgeNode) continue;
+                    if((Node<T>) backCopy.data != edgeNode) 
+                        flag = true;
 
 					// check state for straddling push
-					if(farCopy.data == right_null) {
+					if(!flag && farCopy.data == right_null) {
 						if(in.compareAndSet(inCopy, new DequeueSlot<>(inCopy.data, inCopy.count + 1))
-								&& far.compareAndSet(farCopy, 
-                                        (DequeueSlot<Object>) new DequeueSlot<>(data, farCopy.count + 1))) {
+								&& far.compareAndSet(farCopy, new DequeueSlot<>(data, farCopy.count + 1))) {
 							this.updateRightHint(hintCopy, outNode, 1);
 							return;
 						}
 					}
-					else if(farCopy.data == right_seal) {
+					else if(!flag && farCopy.data == right_seal) {
 						if(in.compareAndSet(inCopy,  new DequeueSlot<>(inCopy.data, inCopy.count + 1))
 								&& out.compareAndSet(outCopy, new DequeueSlot<>(right_null, outCopy.count + 1))) {
 							this.updateRightHint(hintCopy, edgeNode, array_size - 2);
-							NodeHint<T> leftHint = this.findLeftEdge((NodeHint<T>) this.leftNodeHint.get());
+							NodeHint<T> leftHint = this.findLeftEdge(this.leftNodeHint.get());
 							this.updateRightHint(leftHint, leftHint.buffer, leftHint.loc);
 							// retire?
 						}
 					}
 				} // end straddling edge
-			} // end boundary or straddling edge
+            } // end boundary or straddling edge
+            
+            try
+            {
+                // If the EA returns null, that means we found a pop() pair. Return.
+                T otherValue = right_array.visit(data, range.getRange(), delay);
+                if (otherValue == null)
+                {
+                    range.recordEliminationSuccess();
+                    return; // Was able to find a pop() pair :D
+                }
+            }
+            catch (Exception e)
+            {                
+                // If we cought an Exception, that means a pop() wasn't found.
+                // Increase the limit and try again :(
+                limit = Math.min(MAX_DELAY, 2 * delay);
+                range.recordEliminationTimeout();
+            }
 		} // end while
 	}	// end push_right
 
@@ -307,13 +366,18 @@ public class UnboundedDequeue<T> {
 		DequeueSlot<Object> inCopy;
 		AtomicReference<DequeueSlot<Object>> out;
 		DequeueSlot<Object> outCopy;
-		int count = 0;
+        int count = 0;
+        
+        // EBOstuff
+        RangePolicy range = policy.get();
+        int limit = MIN_DELAY;
+
 		while(true) {
 			count++;
 			if(count > 1000) {
 				count = count + 0;
 			}
-			hintCopy = (NodeHint<T>) this.leftNodeHint.get();
+			hintCopy = this.leftNodeHint.get();
 			edge = this.findLeftEdge(hintCopy);
 			edgeNode = edge.buffer;
 			edgeIndex = edge.loc;
@@ -322,15 +386,19 @@ public class UnboundedDequeue<T> {
 			inCopy = in.get();
 			out = edgeNode.array[edgeIndex - 1];
 			outCopy = out.get();
-			
+            boolean flag = false;
+
+            // delay tells us long are we going to search the EA for
+            int delay = (int)(Math.random() * limit);
+
 			if((inCopy.data == left_null || inCopy.data == right_seal)
 					|| (edgeIndex != 1 && outCopy.data != left_null)
 					|| (edgeIndex == array_size - 1 && inCopy.data != right_null)) 
-				continue;
+				flag = true;
 			
 			// interior edge
 			// pop edge, or empty 
-			if(edgeIndex != 1) {
+			if(!flag && edgeIndex != 1) {
 				if(inCopy.data == right_null && in.get() == inCopy)
 					return null; // empty
 				if(out.compareAndSet(outCopy, new DequeueSlot<>(left_null, outCopy.count + 1))
@@ -341,7 +409,7 @@ public class UnboundedDequeue<T> {
 			} // end interior pop
 			
 			// edge is on the border between arrays, seal left node, remove left node, then pop
-			else {
+			else if (!flag) {
 				// check straddle edge ? dafuq this mean
 				if(outCopy.data != left_null) {
 					Node<T> outNode = (Node<T>) outCopy.data;
@@ -352,10 +420,11 @@ public class UnboundedDequeue<T> {
 					AtomicReference<DequeueSlot<Object>> back = outNode.array[array_size - 1];
 					DequeueSlot<Object> backCopy = back.get();
 					
-					if((Node<T>) backCopy.data != edgeNode) continue;
+                    if((Node<T>) backCopy.data != edgeNode)
+                        flag = true;
 					
 					// check for straddle edge and seal
-					if(farCopy.data == left_null) {
+					if(!flag && farCopy.data == left_null) {
 						if(inCopy.data == right_null || inCopy.data == right_seal && in.get() == inCopy) {
 							return null;
 						}
@@ -373,7 +442,7 @@ public class UnboundedDequeue<T> {
 					}
 					
 					// check for sealed left node and remove
-					if(farCopy.data == left_seal) {
+					if(!flag && farCopy.data == left_seal) {
 						if(inCopy.data == right_null && in.get() == inCopy) {
 							return null;
 						}
@@ -382,7 +451,7 @@ public class UnboundedDequeue<T> {
 						if(in.compareAndSet(inCopy, tempInner)
 								&& out.compareAndSet(outCopy, tempOuter)) {
 							hintCopy = this.updateLeftHint(hintCopy, edgeNode, 1);
-							NodeHint<T> right = this.findRightEdge((NodeHint<T>) this.rightNodeHint.get());
+							NodeHint<T> right = this.findRightEdge(this.rightNodeHint.get());
 							this.updateRightHint(right, right.buffer, right.loc);
 							// retire?
 							inCopy = tempInner;
@@ -390,7 +459,7 @@ public class UnboundedDequeue<T> {
 						}
 					}
 				}
-				if(outCopy.data == left_null) {
+				if(!flag && outCopy.data == left_null) {
 					if(inCopy.data == right_null && in.get() == inCopy) {
 						return null;
 					}
@@ -400,7 +469,25 @@ public class UnboundedDequeue<T> {
 						return (T) inCopy.data;
 					}
 				}
-			} // end boundary or straddle edge
+            } // end boundary or straddle edge
+            
+            try
+            {
+                // If the EA returns null, that means we found a pop() pair. Return.
+                T otherValue = left_array.visit(null, range.getRange(), delay);
+                if (otherValue != null)
+                {
+                    range.recordEliminationSuccess();
+                    return otherValue; // Was able to find a pop() pair :D
+                }
+            }
+            catch (Exception e)
+            {                
+                // If we cought an Exception, that means a pop() wasn't found.
+                // Increase the limit and try again :(
+                limit = Math.min(MAX_DELAY, 2 * delay);
+                range.recordEliminationTimeout();
+            }
 		} // end while
 	} // end pop_left
 
@@ -414,12 +501,17 @@ public class UnboundedDequeue<T> {
 		DequeueSlot<Object> inCopy;
 		AtomicReference<DequeueSlot<Object>> out;
 		DequeueSlot<Object> outCopy;
-		int count = 0;
+        int count = 0;
+        
+        // EBOstuff
+        RangePolicy range = policy.get();
+        int limit = MIN_DELAY;
+
 		while(true) {
 			count++;
 			if(count > 1000)
 				count = count + 0;
-			hintCopy = (NodeHint<T>) this.rightNodeHint.get();
+			hintCopy = this.rightNodeHint.get();
 			edge = this.findRightEdge(hintCopy);
 			edgeNode = edge.buffer;
 			edgeIndex = edge.loc;
@@ -427,16 +519,20 @@ public class UnboundedDequeue<T> {
 			in = edgeNode.array[edgeIndex];
 			inCopy = in.get();
 			out = edgeNode.array[edgeIndex + 1];
-			outCopy = out.get();
+            outCopy = out.get();
+            boolean flag = false;
+
+            // delay tells us long are we going to search the EA for
+            int delay = (int)(Math.random() * limit);
 			
 			if((inCopy.data == right_null || inCopy.data == left_seal)
 					|| (edgeIndex != array_size - 2 && outCopy.data != right_null)
 					|| (edgeIndex == 0 && inCopy.data != left_null)) 
-				continue;
+				flag = true;
 			
 			// interior edge
 			// pop edge, or empty 
-			if(edgeIndex != array_size - 2) {
+			if(!flag && edgeIndex != array_size - 2) {
 				if(inCopy.data == left_null && in.get() == inCopy)
 					return null; // empty
 				if(out.compareAndSet(outCopy, new DequeueSlot<>(right_null, outCopy.count + 1))
@@ -447,7 +543,7 @@ public class UnboundedDequeue<T> {
 			} // end interior pop
 			
 			// edge is on the border between arrays, seal left node, remove left node, then pop
-			else {
+			else if (!flag) {
 				// check straddle edge ? dafuq this mean
 				if(outCopy.data != right_null) {
 					Node<T> outNode = (Node<T>) outCopy.data;
@@ -458,10 +554,10 @@ public class UnboundedDequeue<T> {
 					AtomicReference<DequeueSlot<Object>> back = outNode.array[0];
 					DequeueSlot<Object> backCopy = back.get();
 					
-					if((Node<T>) backCopy.data != edgeNode) continue;
+					if((Node<T>) backCopy.data != edgeNode) flag = true;
 					
 					// check for straddle edge and seal
-					if(farCopy.data == right_null) {
+					if(!flag && farCopy.data == right_null) {
 						if(inCopy.data == left_null || inCopy.data == left_seal && in.get() == inCopy) {
 							return null;
 						}
@@ -475,7 +571,7 @@ public class UnboundedDequeue<T> {
 					}
 					
 					// check for sealed left node and remove
-					if(farCopy.data == right_seal) {
+					if(!flag && farCopy.data == right_seal) {
 						if(inCopy.data == left_null && in.get() == inCopy) {
 							return null;
 						}
@@ -484,7 +580,7 @@ public class UnboundedDequeue<T> {
 						if(in.compareAndSet(inCopy, tempInner)
 								&& out.compareAndSet(outCopy, tempOuter)) {
 							hintCopy = this.updateRightHint(hintCopy, edgeNode, array_size - 2);
-							NodeHint<T> left = this.findLeftEdge((NodeHint<T>) this.leftNodeHint.get());
+							NodeHint<T> left = this.findLeftEdge(this.leftNodeHint.get());
 							this.updateLeftHint(left, left.buffer, left.loc);
 							// retire?
 							inCopy = tempInner;
@@ -492,7 +588,7 @@ public class UnboundedDequeue<T> {
 						}
 					}
 				}
-				if(outCopy.data == right_null) {
+				if(!flag && outCopy.data == right_null) {
 					if(inCopy.data == left_null && in.get() == inCopy) {
 						return null;
 					}
@@ -503,7 +599,25 @@ public class UnboundedDequeue<T> {
 						return (T) inCopy.data;
 					}
 				}
-			} // end boundary or straddle edge
+            } // end boundary or straddle edge
+            
+            try
+            {
+                // If the EA returns null, that means we found a pop() pair. Return.
+                T otherValue = right_array.visit(null, range.getRange(), delay);
+                if (otherValue != null)
+                {
+                    range.recordEliminationSuccess();
+                    return otherValue; // Was able to find a pop() pair :D
+                }
+            }
+            catch (Exception e)
+            {                
+                // If we cought an Exception, that means a pop() wasn't found.
+                // Increase the limit and try again :(
+                limit = Math.min(MAX_DELAY, 2 * delay);
+                range.recordEliminationTimeout();
+            }
 		} // end while
 	}
 
@@ -552,9 +666,9 @@ public class UnboundedDequeue<T> {
 			//this.array = (DequeueSlot<T>[]) new DequeueSlot<?>[array_size];
 			this.array = (AtomicReference<DequeueSlot<Object>>[]) new AtomicReference[array_size];
 			for(int i = 0; i < half; i++) 
-				array[i] = new AtomicReference<>(new DequeueSlot<>(left_null));
+				array[i] = new AtomicReference<>(new DequeueSlot<>((T) left_null));
 			for(int i = half; i < this.array.length; i++) 
-				array[i] = new AtomicReference<>(new DequeueSlot<>(right_null));
+				array[i] = new AtomicReference<>(new DequeueSlot<>((T) right_null));
 
 			this.leftHint = half-1;
 			this.rightHint = half;

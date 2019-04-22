@@ -17,12 +17,12 @@ class Node<T>
     }
 }
 
-public class STMUnboundedDeque<T>
+public class ImprovedSTMUnboundedDeque<T>
 {
     private final TxnRef<Node<T>> head, tail;
     private final TxnInteger size;
     
-    public STMUnboundedDeque()
+    public ImprovedSTMUnboundedDeque()
     {
         Node<T> h = new Node<>(null);
         Node<T> t = new Node<>(null);
@@ -33,7 +33,7 @@ public class STMUnboundedDeque<T>
 
     public void push_left(final T data)
     {
-        for (int i = 0; i < 5000; i++);
+        for (int i = 0; i < 1000; i++);
 
         StmUtils.atomic(new Runnable() {
 
@@ -49,7 +49,7 @@ public class STMUnboundedDeque<T>
 
     public void push_right(final T data)
     {
-        for (int i = 0; i < 5000; i++);
+        for (int i = 0; i < 10000; i++);
 
         StmUtils.atomic(new Runnable() {
 
@@ -65,7 +65,7 @@ public class STMUnboundedDeque<T>
 
     public T pop_left()
     {
-        for (int i = 0; i < 5000; i++);
+        for (int i = 0; i < 10000; i++);
 
         return StmUtils.atomic(new TxnCallable<T>() {
           @Override
@@ -82,7 +82,7 @@ public class STMUnboundedDeque<T>
 
     public T pop_right()
     {
-        for (int i = 0; i < 5000; i++);
+        for (int i = 0; i < 10000; i++);
 
         return StmUtils.atomic(new TxnCallable<T>() {
           @Override
